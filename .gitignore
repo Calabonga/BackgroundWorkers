@@ -3,6 +3,13 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Rider
+# Rider auto-generates .iml files, and contentModel.xml
+.idea/
+**/.idea/**/*.iml
+**/.idea/**/contentModel.xml
+**/.idea/**/modules.xml
+
 # User-specific files
 *.rsuser
 *.suo
