@@ -12,6 +12,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Copyright>Calabonga</Copyright>
     <PackageProjectUrl>https://www.calabonga.net</PackageProjectUrl>
+    <PackageIconUrl>http://www.calabonga.net/images/logo.png</PackageIconUrl>
     <PackageIcon>logo.png</PackageIcon>
     <Nullable>enable</Nullable>
     <PackageVersion>1.0.1</PackageVersion>
@@ -25,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\..\..\Documents\Pictures\logo.png">
+    <None Include="logo.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
