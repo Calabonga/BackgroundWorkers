@@ -22,5 +22,5 @@ jobs:
     - name: Publish Calabonga.Microservices.BackgroundWorkers
       uses: brandedoutcast/publish-nuget@v2.5.2
       with:
-          PROJECT_FILE_PATH: Calabonga.Microservices.BackgroundWorkers/Calabonga.Microservices.BackgroundWorkers.sln
+          PROJECT_FILE_PATH: Calabonga.Microservices.BackgroundWorkers/Calabonga.Microservices.BackgroundWorkers.csproj
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
