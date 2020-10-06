@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Calabonga</Authors>
     <Company>Calabonga SOFT</Company>
     <Description>Background workers collection for ASP.NET Core application. CronTab-schedule available.</Description>
@@ -15,10 +15,10 @@
     <PackageIconUrl>http://www.calabonga.net/images/logo.png</PackageIconUrl>
     <PackageIcon>logo.png</PackageIcon>
     <Nullable>enable</Nullable>
-    <PackageVersion>1.0.2</PackageVersion>
+    <PackageVersion>1.0.3</PackageVersion>
     <Title>BackgroundWorkers for Microservices</Title>
-    <AssemblyVersion>1.0.2</AssemblyVersion>
-    <FileVersion>1.0.2</FileVersion>
+    <AssemblyVersion>1.0.3</AssemblyVersion>
+    <FileVersion>1.0.3</FileVersion>
     <RepositoryUrl>https://github.com/Calabonga/BackgroundWorkers</RepositoryUrl>
   </PropertyGroup>
 

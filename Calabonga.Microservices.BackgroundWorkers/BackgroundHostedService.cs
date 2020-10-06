@@ -9,7 +9,7 @@ namespace Calabonga.Microservices.BackgroundWorkers
     /// </summary>
     public abstract class BackgroundHostedService : IHostedService
     {
-        private Task _executingTask;
+        private Task? _executingTask;
         private readonly CancellationTokenSource _stoppingCancellationTokenSource = new CancellationTokenSource();
  
         public virtual Task StartAsync(CancellationToken cancellationToken)

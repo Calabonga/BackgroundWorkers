@@ -21,7 +21,7 @@ namespace Calabonga.Microservices.BackgroundWorkers
     /// </summary>
     public abstract class CrontabScheduledBackgroundHostedService : ScopedBackgroundHostedService
     {
-        private CrontabSchedule _schedule;
+        private CrontabSchedule? _schedule;
         private DateTime _nextRun;
  
         protected abstract string Schedule { get; }
@@ -73,7 +73,7 @@ namespace Calabonga.Microservices.BackgroundWorkers
                 if (now > _nextRun)
                 {
                     await ProcessAsync(token);
-                    _nextRun = _schedule.GetNextOccurrence(DateTime.Now);
+                    _nextRun = _schedule!.GetNextOccurrence(DateTime.Now);
                 }
                 await Task.Delay(5000, token); //5 seconds delay
             }
