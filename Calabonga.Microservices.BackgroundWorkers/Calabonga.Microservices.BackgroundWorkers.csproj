@@ -14,7 +14,7 @@
     <PackageReleaseNotes>IncludingSeconds added for crontab scheduler</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Copyright>Calabonga</Copyright>
-    <PackageProjectUrl>https://www.calabonga.net</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/Calabonga/BackgroundWorkers</PackageProjectUrl>
     <PackageIconUrl>http://www.calabonga.net/images/logo.png</PackageIconUrl>
     <PackageIcon>logo.png</PackageIcon>
     <Nullable>enable</Nullable>
