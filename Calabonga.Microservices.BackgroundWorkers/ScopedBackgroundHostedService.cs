@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Calabonga.Microservices.BackgroundWorkers.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -9,12 +10,12 @@ namespace Calabonga.Microservices.BackgroundWorkers
     /// <summary>
     /// Background processor with services' scope
     /// </summary>
-    public abstract class ScopedBackgroundHostedService : BackgroundHostedService
+    public abstract class ScopedHostedServiceBase : HostedServiceBase
     {
         private readonly IServiceScopeFactory _serviceScopeFactory;
  
         /// <inheritdoc />
-        protected ScopedBackgroundHostedService(IServiceScopeFactory serviceScopeFactory, ILogger logger)
+        protected ScopedHostedServiceBase(IServiceScopeFactory serviceScopeFactory, ILogger logger)
         {
             _serviceScopeFactory = serviceScopeFactory;
             Logger = logger;

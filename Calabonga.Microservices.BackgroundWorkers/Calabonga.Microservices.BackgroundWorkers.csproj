@@ -2,23 +2,23 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
+    <PackageVersion>1.0.4</PackageVersion>
+    <AssemblyVersion>1.0.4</AssemblyVersion>
+    <FileVersion>1.0.4</FileVersion>
     <Authors>Calabonga</Authors>
     <Company>Calabonga SOFT</Company>
     <Description>Background workers collection for ASP.NET Core application. CronTab-schedule available.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>calabonga, CronTab, background, worker, microservices, hosted, service, aspnetcore, core, hostedservice</PackageTags>
-    <PackageReleaseNotes>Pipeline for lifestyle updated</PackageReleaseNotes>
+    <PackageReleaseNotes>IncludingSeconds added for crontab scheduler</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Copyright>Calabonga</Copyright>
     <PackageProjectUrl>https://www.calabonga.net</PackageProjectUrl>
     <PackageIconUrl>http://www.calabonga.net/images/logo.png</PackageIconUrl>
     <PackageIcon>logo.png</PackageIcon>
     <Nullable>enable</Nullable>
-    <PackageVersion>1.0.3</PackageVersion>
     <Title>BackgroundWorkers for Microservices</Title>
-    <AssemblyVersion>1.0.3</AssemblyVersion>
-    <FileVersion>1.0.3</FileVersion>
     <RepositoryUrl>https://github.com/Calabonga/BackgroundWorkers</RepositoryUrl>
   </PropertyGroup>
 

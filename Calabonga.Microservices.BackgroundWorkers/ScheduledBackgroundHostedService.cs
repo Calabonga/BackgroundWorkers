@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Calabonga.Microservices.Core.Exceptions;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 using NCrontab;
 
 namespace Calabonga.Microservices.BackgroundWorkers
@@ -19,40 +22,48 @@ namespace Calabonga.Microservices.BackgroundWorkers
     /// | +----------- min (0 - 59)
     /// +------------- sec (0 - 59)
     /// </summary>
-    public abstract class ScheduledBackgroundHostedService : ScopedBackgroundHostedService
+    public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
     {
-        private CrontabSchedule _schedule;
+        private CrontabSchedule? _schedule;
         private DateTime _nextRun;
- 
+
         protected abstract string Schedule { get; }
- 
-        protected ScheduledBackgroundHostedService(IServiceScopeFactory serviceScopeFactory, ILogger logger)
+
+        protected ScheduledHostedServiceBase(
+            IServiceScopeFactory serviceScopeFactory,
+            ILogger logger)
             : base(serviceScopeFactory, logger)
         {
             GetSchedule();
         }
- 
+
         #region Properties
- 
+
         /// <summary>
         /// Indicates that hosted service should start process on server restart
         /// </summary>
         protected virtual bool IsExecuteOnServerRestart => false;
- 
+
         /// <summary>
         /// Identify service by name
         /// </summary>
         protected abstract string DisplayName { get; }
- 
+
+        /// <summary>
+        /// ParseOptions for Crontab schedule
+        /// </summary>
+        protected virtual bool IncludingSeconds { get; set; }
+
         #endregion
- 
+
         private void GetSchedule()
         {
             if (string.IsNullOrEmpty(Schedule))
             {
                 throw new MicroserviceArgumentNullException(nameof(Schedule));
             }
-            _schedule = CrontabSchedule.Parse(Schedule);
+
+            _schedule = CrontabSchedule.Parse(Schedule, new CrontabSchedule.ParseOptions { IncludingSeconds = IncludingSeconds });
             var currentDateTime = DateTime.Now;
             if (IsExecuteOnServerRestart)
             {
@@ -64,7 +75,7 @@ namespace Calabonga.Microservices.BackgroundWorkers
                 _nextRun = _schedule.GetNextOccurrence(currentDateTime);
             }
         }
- 
+
         protected override async Task ExecuteAsync(CancellationToken token)
         {
             do
@@ -73,7 +84,7 @@ namespace Calabonga.Microservices.BackgroundWorkers
                 if (now > _nextRun)
                 {
                     await ProcessAsync(token);
-                    _nextRun = _schedule.GetNextOccurrence(DateTime.Now);
+                    _nextRun = _schedule!.GetNextOccurrence(DateTime.Now);
                 }
                 await Task.Delay(5000, token); //5 seconds delay
             }

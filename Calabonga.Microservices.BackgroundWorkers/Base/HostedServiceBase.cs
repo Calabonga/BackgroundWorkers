@@ -2,12 +2,12 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 
-namespace Calabonga.Microservices.BackgroundWorkers
+namespace Calabonga.Microservices.BackgroundWorkers.Base
 {
     /// <summary>
-    /// Background service (hosted)
+    /// Background service (Hosted service) as base for all services
     /// </summary>
-    public abstract class BackgroundHostedService : IHostedService
+    public abstract class HostedServiceBase : IHostedService
     {
         private Task? _executingTask;
         private readonly CancellationTokenSource _stoppingCancellationTokenSource = new CancellationTokenSource();
