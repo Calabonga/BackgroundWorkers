@@ -55,7 +55,13 @@ namespace Calabonga.Microservices.BackgroundWorkers
         /// </summary>
         protected virtual bool IncludingSeconds { get; set; }
 
+        /// <summary>
+        /// Use delay before start. 
+        /// It can be helpful when you need start in DEBUG mode your application and want that scheduler starts too <see cref="IsExecuteOnServerRestart"/>
+        /// </summary>
+        protected virtual bool IsDelayBeforeStart { get;  } = true;
         #endregion
+
 
         private void GetSchedule()
         {
@@ -84,10 +90,14 @@ namespace Calabonga.Microservices.BackgroundWorkers
                 var now = DateTime.Now;
                 if (now > NextRun)
                 {
-                    await ProcessAsync(token);
                     NextRun = _schedule!.GetNextOccurrence(DateTime.Now);
+                    await ProcessAsync(token);
                 }
-                await Task.Delay(5000, token); //5 seconds delay
+
+                if (IsDelayBeforeStart)
+                {
+                    await Task.Delay(5000, token); //5 seconds delay
+                }
             }
             while (!token.IsCancellationRequested);
         }
