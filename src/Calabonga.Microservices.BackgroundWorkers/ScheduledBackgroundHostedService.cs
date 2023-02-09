@@ -8,8 +8,8 @@ using NCrontab;
 
 namespace Calabonga.Microservices.BackgroundWorkers
 {
-    /// <summary>
-    /// Scheduled Scoped Background Service with CronTab functionality
+    /// <summary> 
+    /// Scheduled and Scoped Background Service with CronTab functionality
     /// * * * * * *
     /// | | | | | |
     /// | | | | | +--- day of week (0 - 6) (Sunday=0)
@@ -22,7 +22,6 @@ namespace Calabonga.Microservices.BackgroundWorkers
     public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
     {
         private CrontabSchedule? _schedule;
-        private DateTime _nextRun;
 
         protected abstract string Schedule { get; }
 
@@ -47,7 +46,12 @@ namespace Calabonga.Microservices.BackgroundWorkers
         protected abstract string DisplayName { get; }
 
         /// <summary>
-        /// ParseOptions for Crontab schedule
+        /// Next Run information calculated by Cron schedule
+        /// </summary>
+        public DateTime NextRun { get; private set; }
+
+        /// <summary>
+        /// ParseOptions for Cron schedule
         /// </summary>
         protected virtual bool IncludingSeconds { get; set; }
 
@@ -64,12 +68,12 @@ namespace Calabonga.Microservices.BackgroundWorkers
             var currentDateTime = DateTime.Now;
             if (IsExecuteOnServerRestart)
             {
-                _nextRun = currentDateTime.AddSeconds(5);
+                NextRun = currentDateTime.AddSeconds(5);
                 Logger.LogInformation($"{DisplayName} ({nameof(IsExecuteOnServerRestart)} = {IsExecuteOnServerRestart})");
             }
             else
             {
-                _nextRun = _schedule.GetNextOccurrence(currentDateTime);
+                NextRun = _schedule.GetNextOccurrence(currentDateTime);
             }
         }
 
@@ -78,10 +82,10 @@ namespace Calabonga.Microservices.BackgroundWorkers
             do
             {
                 var now = DateTime.Now;
-                if (now > _nextRun)
+                if (now > NextRun)
                 {
                     await ProcessAsync(token);
-                    _nextRun = _schedule!.GetNextOccurrence(DateTime.Now);
+                    NextRun = _schedule!.GetNextOccurrence(DateTime.Now);
                 }
                 await Task.Delay(5000, token); //5 seconds delay
             }
