@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-
-using Calabonga.Microservices.Core.Exceptions;
-
+using Calabonga.Microservices.BackgroundWorkers.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
 using NCrontab;
 
 namespace Calabonga.Microservices.BackgroundWorkers
@@ -60,7 +57,7 @@ namespace Calabonga.Microservices.BackgroundWorkers
         {
             if (string.IsNullOrEmpty(Schedule))
             {
-                throw new MicroserviceArgumentNullException(nameof(Schedule));
+                throw new WorkerArgumentNullException(nameof(Schedule));
             }
 
             _schedule = CrontabSchedule.Parse(Schedule, new CrontabSchedule.ParseOptions { IncludingSeconds = IncludingSeconds });
