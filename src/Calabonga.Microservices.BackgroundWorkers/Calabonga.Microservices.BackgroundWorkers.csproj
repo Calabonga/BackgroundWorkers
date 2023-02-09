@@ -11,7 +11,7 @@
     <Description>Background workers collection for ASP.NET Core application. CronTab-schedule available.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>calabonga, CronTab, background, worker, microservices, hosted, service, aspnetcore, core, hostedservice</PackageTags>
-    <PackageReleaseNotes>Migrated to NET5.0</PackageReleaseNotes>
+    <PackageReleaseNotes>Readme updated</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Copyright>Calabonga</Copyright>
     <PackageProjectUrl>https://github.com/Calabonga/BackgroundWorkers</PackageProjectUrl>
@@ -20,6 +20,8 @@
     <Nullable>enable</Nullable>
     <Title>BackgroundWorkers for Microservices</Title>
     <RepositoryUrl>https://github.com/Calabonga/BackgroundWorkers</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
