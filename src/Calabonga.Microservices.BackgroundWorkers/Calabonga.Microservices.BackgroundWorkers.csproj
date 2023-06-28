@@ -2,16 +2,13 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>2.0.2</Version>
-        <PackageVersion>2.0.2</PackageVersion>
-        <AssemblyVersion>2.0.2</AssemblyVersion>
-        <FileVersion>2.0.2</FileVersion>
+        <Version>2.0.3</Version>
         <Authors>Calabonga</Authors>
         <Company>Calabonga SOFT</Company>
         <Description>Background workers collection for ASP.NET Core application. CronTab-schedule available.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>calabonga, CronTab, background, worker, microservices, hosted, service, aspnetcore, core, hostedservice</PackageTags>
-        <PackageReleaseNotes>Next run datetime exposed from scheduler and IsDelayBeforeStart property added</PackageReleaseNotes>
+        <PackageReleaseNotes>Fixed parameter IncludingSeconds</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Copyright>Calabonga</Copyright>
         <PackageProjectUrl>https://github.com/Calabonga/BackgroundWorkers</PackageProjectUrl>

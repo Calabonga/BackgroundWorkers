@@ -53,7 +53,7 @@ namespace Calabonga.Microservices.BackgroundWorkers
         /// <summary>
         /// ParseOptions for Cron schedule
         /// </summary>
-        protected virtual bool IncludingSeconds { get; set; }
+        protected virtual bool IncludingSeconds => false;
 
         /// <summary>
         /// Use delay before start. 
