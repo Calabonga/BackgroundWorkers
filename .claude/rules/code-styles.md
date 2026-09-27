@@ -1,11 +1,12 @@
 ## Рекомендации по языку C# и стилю
 
-Проект собирается под `netstandard2.1` с `<LangVersion>8.0</LangVersion>`. Эти правила **заменяют** общие правила из `C:\Projects\.claude\rules\code-styles.md` там, где они противоречат ограничениям C# 8.0.
+Проект собирается под `netstandard2.1` с `<LangVersion>10.0</LangVersion>` и `<ImplicitUsings>enable</ImplicitUsings>`. Эти правила **заменяют** общие правила из `C:\Projects\.claude\rules\code-styles.md` там, где они противоречат ограничениям платформы.
 
-### **Синтаксис C# 8.0**
-- Используй блочные пространства имён (`namespace X { ... }`) — file-scoped namespaces недоступны.
-- Не используй `global using`, `record`, `init`, `is not`/`and`/`or`-паттерны, target-typed `new()` — всё это C# 9+.
-- Доступно и приветствуется: `using var`, `switch`-выражения, property/tuple-паттерны, `??=`, статические локальные функции.
+### **Синтаксис C# 10.0**
+- Используй file-scoped namespaces (`namespace X;`).
+- `System`, `System.Threading`, `System.Threading.Tasks` и др. подключены через `ImplicitUsings` — не дублируй их `using`. Свои `global using` — только для реально частых пространств имён.
+- Доступно: `is not`/`and`/`or`-паттерны, target-typed `new()`, `using var`, `switch`-выражения, extended property patterns.
+- Не используй `record`, `init` и `required`: в `netstandard2.1` нет `IsExternalInit`, а полифиллы добавлять только после согласования. Не повышай `LangVersion` выше 10.0 без согласования — фичи C# 11+ частично требуют типов рантайма, которых нет в `netstandard2.1`.
 
 ### **Безопасность нулевых значений**
 - `<Nullable>enable</Nullable>` включён.
@@ -41,5 +42,5 @@
 - Уровни: `Error` — исключение в итерации, `Information` — старт/значимые события. Не логируй каждую итерацию цикла.
 
 ### **Время/Часы**
-- Сейчас используется `DateTime.Now` (локальное время сервера). `TimeProvider` в `netstandard2.1` доступен только через пакет `Microsoft.Bcl.TimeProvider` и меняет конструкторы — вводи его только после согласования.
-- Не смешивай `DateTime.Now` и `DateTime.UtcNow` в расчётах `NextRun`.
+- Всё время в библиотеке — UTC (`DateTime.UtcNow`); cron-расписание и `NextRun` в UTC. Не используй `DateTime.Now`.
+- `TimeProvider` в `netstandard2.1` доступен только через пакет `Microsoft.Bcl.TimeProvider` и меняет конструкторы — вводи его только после согласования.
