@@ -7,15 +7,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - @rules/architecture.md — расширение через наследование, публичный контракт, ограничения зависимостей и платформы.
 - @rules/code-styles.md — стиль C# в рамках C# 10.0 / `netstandard2.1`, асинхронность, ошибки, логирование, время.
 - @rules/conventions.md — именование классов, файлов, пространств имён, исключений и точек расширения.
-- @rules/testing.md — тестов нет; как оформлять тестовый проект, если он появится.
+- @rules/testing.md — xUnit v3 на Microsoft.Testing.Platform, тестовые наследники, медленные тесты.
 - @rules/workflow.md — ветки от `master`, формат коммитов, релиз через push в `master`.
 
 ## Обзор
 
 `Calabonga.Microservices.BackgroundWorkers` — небольшая NuGet-библиотека с базовыми классами фоновых
 сервисов (`IHostedService`) для приложений ASP.NET Core: воркер с DI-scope на каждую итерацию и воркер
-по расписанию CronTab (пакет `ncrontab`). В репозитории находится **только библиотека** — без примера
-приложения и без тестов (пример использования живёт в отдельном репозитории `Calabonga/BackgroundWorker`).
+по расписанию CronTab (пакет `ncrontab`). В репозитории — библиотека и unit-тесты, без примера приложения
+(пример использования живёт в отдельном репозитории `Calabonga/BackgroundWorker`).
 Целевая платформа — `netstandard2.1`, `LangVersion` 10.0.
 
 ## Команды
@@ -28,9 +28,18 @@ dotnet build src/Calabonga.Microservices.BackgroundWorkers/Calabonga.Microservic
 dotnet pack src/Calabonga.Microservices.BackgroundWorkers/Calabonga.Microservices.BackgroundWorkers.csproj --configuration Release
 ```
 
+Тесты идут через Microsoft.Testing.Platform (`global.json`), поэтому проект передаётся через `--project`, а
+аргументы xUnit — после `--`:
+
+```bash
+dotnet test --project src/Calabonga.Microservices.BackgroundWorkers.Tests/Calabonga.Microservices.BackgroundWorkers.Tests.csproj -c Release
+dotnet test --project src/Calabonga.Microservices.BackgroundWorkers.Tests/Calabonga.Microservices.BackgroundWorkers.Tests.csproj -c Release -- --filter-not-trait "Category=Slow"
+dotnet test --project src/Calabonga.Microservices.BackgroundWorkers.Tests/Calabonga.Microservices.BackgroundWorkers.Tests.csproj -c Release -- --filter-method "*ScheduleEmpty"
+```
+
 `GeneratePackageOnBuild` установлен в `true`, поэтому `.nupkg` появляется уже при сборке. CI
 (`.github/workflows/main.yml`) запускается при push в `master` и вручную (`workflow_dispatch`): сборка на
-`windows-latest` с .NET SDK 10.0.x, `dotnet pack` и `dotnet nuget push` на nuget.org с секретом
+`windows-latest` с .NET SDK 10.0.x, `dotnet test`, `dotnet pack` и `dotnet nuget push` на nuget.org с секретом
 `NUGET_API_KEY`. Флага `--skip-duplicate` нет — push без изменения `<Version>` в `.csproj` уронит CI.
 При выпуске поднимается `<Version>` и обновляется `<PackageReleaseNotes>`. `README.md` и `logo.png`
 упаковываются в пакет.

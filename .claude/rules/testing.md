@@ -1,17 +1,19 @@
 ## Договоренности по тестированию
 
-- Тестового проекта в репозитории нет. Не создавай его самостоятельно — уточни, нужен ли он.
-- Пока тестов нет, изменения проверяй сборкой `.csproj` в Release и запуском потребителя.
+- Тесты: `src/Calabonga.Microservices.BackgroundWorkers.Tests/` (`net10.0`, в `src/Calabonga.Microservices.BackgroundWorkers.sln`). Сама библиотека остаётся `netstandard2.1`.
+- Frameworks: xUnit v3 (`xunit.v3`), Moq, AutoFixture (`AutoFixture.AutoMoq`).
+- Раннер — Microsoft.Testing.Platform (включён в `global.json` в корне репозитория). Пакеты VSTest (`Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`) не добавляй: на .NET 10 SDK `dotnet test` в режиме VSTest с xUnit v3 падает.
+- CI запускает `dotnet test` перед `dotnet pack` — упавший тест блокирует публикацию пакета.
 
-### Если тестовый проект будет создан
-- Расположение: `src/Calabonga.Microservices.BackgroundWorkers.Tests/`, добавить в `src/Calabonga.Microservices.BackgroundWorkers.sln`.
-- Целевая платформа тестов — актуальная .NET (сама библиотека остаётся `netstandard2.1`).
-- Frameworks: xUnit версии 3 и выше, Moq, AutoFixture (`AutoFixture.AutoMoq`).
-- Тестируй воркеры через тестовых наследников базовых классов; `IServiceScopeFactory` и `ILogger` — через Moq.
-- Для сценариев жизненного цикла (`StartAsync`/`StopAsync`) используй `Host` из `Microsoft.Extensions.Hosting` в тестовом проекте, а не `WebApplicationFactory`.
-- Не делай тесты, зависящие от реального ожидания 5-секундного `Task.Delay` и текущего времени, без крайней необходимости.
-- Добавь шаг `dotnet test` в `.github/workflows/main.yml` перед `dotnet pack`.
+### Как писать тесты
+- Тестируй базовые классы через тестовых наследников, вложенных `private sealed` классами в тестовый класс; protected-члены открывай через публичные обёртки (`RunProcessAsync`).
+- Настройки `ScheduledHostedServiceBase` (`Schedule`, `IncludingSeconds`, `IsExecuteOnServerRestart`, `IsDelayBeforeStart`) читаются в базовом конструкторе, поэтому передавать их через конструктор наследника нельзя — на каждый сценарий отдельный наследник с константными override.
+- `IServiceScopeFactory`, `IServiceScope`, `ILogger` — через Moq; проверка логов — `LoggerMockExtensions.VerifyLog`.
+- Используй `TestContext.Current.CancellationToken` в тестах.
+- Тесты, которые реально ждут 5-секундный интервал проверки расписания, помечай `[Trait("Category", "Slow")]`. Не делай их без крайней необходимости.
+- Тест на зависание (цикл без `await`) запускай через `Task.Run` + `Task.WhenAny` с таймаутом, иначе тестовый поток зависнет вместе с кодом.
+- Регрессионный тест на исправленный баг проверяй на коде до исправления — он должен падать.
 
 ### Шаблоны для именования
 - `MethodName_Should_ExpectedBehavior_When_Condition` (например, `Constructor_Should_ThrowWorkerArgumentNullException_When_ScheduleEmpty`).
-- `MethodName_ShouldNot_ExpectedBehavior_When_Condition` (например, `ProcessAsync_ShouldNot_Throw_When_ProcessInScopeFails`).
+- `MethodName_ShouldNot_ExpectedBehavior_When_Condition` (например, `ProcessAsync_ShouldNot_Throw_When_ProcessThrows`).
