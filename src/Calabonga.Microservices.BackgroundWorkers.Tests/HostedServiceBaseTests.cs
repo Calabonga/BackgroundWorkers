@@ -20,6 +20,48 @@ public sealed class HostedServiceBaseTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_Should_ProcessAgain_When_IntervalElapsed()
+    {
+        // Arrange
+        var token = TestContext.Current.CancellationToken;
+        var time = new SteppingTimeProvider(DateTimeOffset.UnixEpoch);
+        var service = new TestHostedService(_ => Task.CompletedTask, time);
+        await service.StartAsync(token);
+
+        // Act
+        var isIterated = await time.AdvanceToNextIterationAsync(TimeSpan.FromSeconds(5), token);
+        await service.StopAsync(token);
+
+        // Assert
+        Assert.True(isIterated);
+        Assert.Equal(2, service.ProcessCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldNot_ProcessAgain_When_IntervalNotElapsed()
+    {
+        // Arrange
+        var token = TestContext.Current.CancellationToken;
+        var time = new SteppingTimeProvider(DateTimeOffset.UnixEpoch);
+        var service = new TestHostedService(_ => Task.CompletedTask, time);
+        await service.StartAsync(token);
+
+        // Act
+        time.Advance(TimeSpan.FromSeconds(4.9));
+        await service.StopAsync(token);
+
+        // Assert
+        Assert.Equal(1, service.ProcessCount);
+    }
+
+    [Fact]
+    public void Constructor_Should_ThrowArgumentNullException_When_TimeProviderNull()
+    {
+        // null! is intentional: the test checks the guard against null from callers without nullable annotations
+        Assert.Throws<ArgumentNullException>(() => new TestHostedService(_ => Task.CompletedTask, null!));
+    }
+
+    [Fact]
     public async Task StartAsync_Should_ReturnFaultedTask_When_ProcessFailsSynchronously()
     {
         // Arrange
@@ -86,6 +128,12 @@ public sealed class HostedServiceBaseTests
         private int _processCount;
 
         public TestHostedService(Func<CancellationToken, Task> process)
+        {
+            _process = process;
+        }
+
+        public TestHostedService(Func<CancellationToken, Task> process, TimeProvider timeProvider)
+            : base(timeProvider)
         {
             _process = process;
         }
