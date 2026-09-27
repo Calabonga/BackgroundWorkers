@@ -8,6 +8,7 @@
 ### Как писать тесты
 - Тестируй базовые классы через тестовых наследников, вложенных `private sealed` классами в тестовый класс; protected-члены открывай через публичные обёртки (`RunProcessAsync`).
 - Настройки `ScheduledHostedServiceBase` (`Schedule`, `IncludingSeconds`, `IsExecuteOnServerRestart`, `IsDelayBeforeStart`) читаются в базовом конструкторе, поэтому передавать их через конструктор наследника нельзя — на каждый сценарий отдельный наследник с константными override.
+- `PeriodicHostedServiceBase` читает настройки при старте, поэтому для него достаточно одного тестового наследника с настройками через конструктор. Случайные интервалы — через наследника `Random` с заданной последовательностью (`SequenceRandom`), а проверки диапазона на настоящем `Random` — только с фиксированным seed, чтобы тест не был вероятностным.
 - `IServiceScopeFactory`, `IServiceScope`, `ILogger` — через Moq; проверка логов — `LoggerMockExtensions.VerifyLog`.
 - Используй `TestContext.Current.CancellationToken` в тестах.
 - Время — только через `TimeProvider`-перегрузки конструкторов: `SteppingTimeProvider` для тестов цикла, `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`) для тестов конструктора. Тесты не должны ждать реальные 5 секунд и зависеть от текущего времени.

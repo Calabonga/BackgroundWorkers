@@ -1,6 +1,6 @@
 # BackgroundWorkers
 
-Background Workers for Microservices on ASP.NET Core. Contains Scoped and Scheduled workers
+Background Workers for Microservices on ASP.NET Core. Contains Scoped, Scheduled and Periodic workers
 
 # Installation and sample
 
@@ -52,6 +52,55 @@ public sealed class DailyReportWorker : ScheduledHostedServiceBase
 }
 ```
 
+**Periodic worker.** `PeriodicHostedServiceBase` (since version 3.2.0) runs your code repeatedly with a random interval instead of a fixed schedule. Set the unit in `PeriodType` (`Minutes` or `Hours`) and the bounds in `MinValue` and `MaxValue`: after each run the next interval is chosen randomly between them, inclusive, with whole-minute precision, and is counted from the start of the run. For example, 3–4 hours gives intervals like 3:00, 3:07, 3:59 or 4:00, and 10–15 minutes gives 10, 11, …, 15 minutes. Unlike the scheduled worker, the settings are read when the worker starts, not in the constructor, so they can come from options injected into your class; invalid values (`MinValue` less than 1, `MaxValue` less than `MinValue`) throw `WorkerArgumentOutOfRangeException` and stop the host from starting. `IsExecuteOnServerRestart`, `IsDelayBeforeStart` and `NextRun` work the same way as in the scheduled worker.
+
+```json
+// appsettings.json
+{
+  "DatabaseReview": {
+    "MinHours": 3,
+    "MaxHours": 4
+  }
+}
+```
+
+```csharp
+public sealed class ReviewOptions
+{
+    public int MinHours { get; set; } = 3;
+
+    public int MaxHours { get; set; } = 4;
+}
+
+public sealed class DatabaseReviewWorker : PeriodicHostedServiceBase
+{
+    private readonly ReviewOptions _options;
+
+    public DatabaseReviewWorker(IServiceScopeFactory serviceScopeFactory, ILogger<DatabaseReviewWorker> logger, IOptions<ReviewOptions> options)
+        : base(serviceScopeFactory, logger)
+    {
+        _options = options.Value;
+    }
+
+    // every 3-4 hours, values from the "DatabaseReview" section of appsettings.json
+    protected override PeriodType PeriodType => PeriodType.Hours;
+
+    protected override int MinValue => _options.MinHours;
+
+    protected override int MaxValue => _options.MaxHours;
+
+    protected override string DisplayName => "Database review";
+
+    protected override bool IsExecuteOnServerRestart => true;
+
+    protected override async Task ProcessInScopeAsync(IServiceProvider serviceProvider, CancellationToken token)
+    {
+        var viewer = serviceProvider.GetRequiredService<IDatabaseViewer>();
+        await viewer.CheckDatabaseAsync(token);
+    }
+}
+```
+
 **Registration.** Workers are ordinary hosted services, so register them with `AddHostedService<T>()`: the host starts them together with the application and cancels them on shutdown. The library targets `netstandard2.1` and depends only on `Microsoft.Extensions.*.Abstractions`, `Microsoft.Bcl.TimeProvider` and `ncrontab`, so it works with any .NET host, not only ASP.NET Core. For a custom loop you can inherit `HostedServiceBase` directly and override `ProcessAsync` (and `ExecuteAsync` to change the timing).
 
 ```csharp
@@ -59,12 +108,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHostedService<CleanupWorker>();
 builder.Services.AddHostedService<DailyReportWorker>();
+builder.Services.Configure<ReviewOptions>(builder.Configuration.GetSection("DatabaseReview"));
+builder.Services.AddHostedService<DatabaseReviewWorker>();
 
 var app = builder.Build();
 app.Run();
 ```
 
-**Testing.** Since version 3.1.0 every base class has a constructor overload that accepts `TimeProvider`: the workers read the current time and wait between checks only through it (the old constructors use `TimeProvider.System`). Pass a `FakeTimeProvider` from `Microsoft.Extensions.TimeProvider.Testing` in tests to check your schedule instantly, without real 5-second waits. Each `Advance` that passes a 5-second check triggers one iteration of the loop.
+**Testing.** Since version 3.1.0 every base class has a constructor overload that accepts `TimeProvider`: the workers read the current time and wait between checks only through it (the old constructors use `TimeProvider.System`). Pass a `FakeTimeProvider` from `Microsoft.Extensions.TimeProvider.Testing` in tests to check your schedule instantly, without real 5-second waits. Each `Advance` that passes a 5-second check triggers one iteration of the loop. `PeriodicHostedServiceBase` also has an overload with `Random`: pass a seeded or custom `Random` to make the chosen intervals predictable.
 
 ```csharp
 public sealed class DailyReportWorker : ScheduledHostedServiceBase
