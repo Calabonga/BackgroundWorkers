@@ -19,6 +19,7 @@ namespace Calabonga.Microservices.BackgroundWorkers;
 /// </summary>
 public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
 {
+    private const int CheckIntervalMilliseconds = 5000;
     private CrontabSchedule? _schedule;
 
     protected abstract string Schedule { get; }
@@ -54,7 +55,8 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
     protected virtual bool IncludingSeconds => false;
 
     /// <summary>
-    /// Use delay before start.
+    /// Use 5 seconds delay before the first schedule check.
+    /// The schedule is checked every 5 seconds regardless of this value.
     /// It can be helpful when you need start in DEBUG mode your application and want that scheduler starts too <see cref="IsExecuteOnServerRestart"/>
     /// </summary>
     protected virtual bool IsDelayBeforeStart { get;  } = true;
@@ -83,6 +85,11 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        if (IsDelayBeforeStart)
+        {
+            await Task.Delay(CheckIntervalMilliseconds, token);
+        }
+
         do
         {
             var now = DateTime.UtcNow;
@@ -92,10 +99,7 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
                 await ProcessAsync(token);
             }
 
-            if (IsDelayBeforeStart)
-            {
-                await Task.Delay(5000, token); //5 seconds delay
-            }
+            await Task.Delay(CheckIntervalMilliseconds, token);
         }
         while (!token.IsCancellationRequested);
     }
