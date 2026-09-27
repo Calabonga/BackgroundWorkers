@@ -2,13 +2,13 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>3.1.0</Version>
+        <Version>3.2.0</Version>
         <Authors>Calabonga</Authors>
         <Company>Calabonga SOFT</Company>
-        <Description>Background workers collection for ASP.NET Core application. CronTab-schedule available.</Description>
+        <Description>Background workers collection for ASP.NET Core application. CronTab-schedule and periodic workers with random interval available.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>calabonga, CronTab, background, worker, microservices, hosted, service, aspnetcore, core, hostedservice</PackageTags>
-        <PackageReleaseNotes>TimeProvider support: new protected constructors accept TimeProvider (Microsoft.Bcl.TimeProvider) for current time and delays, e.g. FakeTimeProvider in tests. Fixed busy-loop in ScheduledHostedServiceBase when IsDelayBeforeStart = false.</PackageReleaseNotes>
+        <PackageReleaseNotes>New PeriodicHostedServiceBase: runs periodically with a random interval between MinValue and MaxValue (PeriodType.Minutes or PeriodType.Hours, inclusive, whole minutes).</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Copyright>Calabonga</Copyright>
         <PackageProjectUrl>https://github.com/Calabonga/BackgroundWorkers</PackageProjectUrl>
@@ -22,6 +22,10 @@
         <LangVersion>10.0</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Calabonga.Microservices.BackgroundWorkers.Tests" />
+    </ItemGroup>
 
     <ItemGroup>
         <None Include="..\..\README.md">
