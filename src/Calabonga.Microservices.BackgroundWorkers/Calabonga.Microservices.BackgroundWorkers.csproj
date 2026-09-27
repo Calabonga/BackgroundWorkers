@@ -8,7 +8,7 @@
         <Description>Background workers collection for ASP.NET Core application. CronTab-schedule available.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>calabonga, CronTab, background, worker, microservices, hosted, service, aspnetcore, core, hostedservice</PackageTags>
-        <PackageReleaseNotes>BREAKING: schedule and NextRun are now in UTC. C# 10.0 with file-scoped namespaces.</PackageReleaseNotes>
+        <PackageReleaseNotes>BREAKING: schedule and NextRun are now in UTC. C# 10.0 with file-scoped namespaces. Microsoft.Extensions.*.Abstractions updated to 10.0.12.</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Copyright>Calabonga</Copyright>
         <PackageProjectUrl>https://github.com/Calabonga/BackgroundWorkers</PackageProjectUrl>
@@ -35,9 +35,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
         <PackageReference Include="ncrontab" Version="3.3.1" />
     </ItemGroup>
 
