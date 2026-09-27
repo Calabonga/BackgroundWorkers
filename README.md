@@ -52,7 +52,7 @@ public sealed class DailyReportWorker : ScheduledHostedServiceBase
 }
 ```
 
-**Registration.** Workers are ordinary hosted services, so register them with `AddHostedService<T>()`: the host starts them together with the application and cancels them on shutdown. The library targets `netstandard2.1` and depends only on `Microsoft.Extensions.*.Abstractions` and `ncrontab`, so it works with any .NET host, not only ASP.NET Core. For a custom loop you can inherit `HostedServiceBase` directly and override `ProcessAsync` (and `ExecuteAsync` to change the timing).
+**Registration.** Workers are ordinary hosted services, so register them with `AddHostedService<T>()`: the host starts them together with the application and cancels them on shutdown. The library targets `netstandard2.1` and depends only on `Microsoft.Extensions.*.Abstractions`, `Microsoft.Bcl.TimeProvider` and `ncrontab`, so it works with any .NET host, not only ASP.NET Core. For a custom loop you can inherit `HostedServiceBase` directly and override `ProcessAsync` (and `ExecuteAsync` to change the timing).
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -62,4 +62,24 @@ builder.Services.AddHostedService<DailyReportWorker>();
 
 var app = builder.Build();
 app.Run();
+```
+
+**Testing.** Since version 3.1.0 every base class has a constructor overload that accepts `TimeProvider`: the workers read the current time and wait between checks only through it (the old constructors use `TimeProvider.System`). Pass a `FakeTimeProvider` from `Microsoft.Extensions.TimeProvider.Testing` in tests to check your schedule instantly, without real 5-second waits. Each `Advance` that passes a 5-second check triggers one iteration of the loop.
+
+```csharp
+public sealed class DailyReportWorker : ScheduledHostedServiceBase
+{
+    public DailyReportWorker(IServiceScopeFactory serviceScopeFactory, ILogger<DailyReportWorker> logger, TimeProvider timeProvider)
+        : base(serviceScopeFactory, logger, timeProvider) { }
+
+    // ...
+}
+
+// registration: TimeProvider must be available in DI
+builder.Services.TryAddSingleton(TimeProvider.System);
+
+// test
+var time = new FakeTimeProvider(new DateTimeOffset(2026, 1, 15, 10, 0, 0, TimeSpan.Zero));
+var worker = new DailyReportWorker(scopeFactory, logger, time);
+Assert.Equal(new DateTime(2026, 1, 16, 3, 0, 0), worker.NextRun);
 ```

@@ -28,7 +28,7 @@
 ### **Асинхронный поток**
 - Добавляй `Async` ко всем именам асинхронных методов.
 - В новом и изменённом коде используй `ConfigureAwait(false)` — это библиотечный код.
-- Передавай `CancellationToken` во все асинхронные методы, которые его принимают, включая `Task.Delay`.
+- Передавай `CancellationToken` во все асинхронные методы, которые его принимают, включая `TimeProvider.Delay`.
 
 ### **Обработка ошибок**
 - Используй подход Fail Fast: некорректная конфигурация воркера (например, пустой `Schedule`) приводит к исключению в конструкторе.
@@ -42,5 +42,5 @@
 - Уровни: `Error` — исключение в итерации, `Information` — старт/значимые события. Не логируй каждую итерацию цикла.
 
 ### **Время/Часы**
-- Всё время в библиотеке — UTC (`DateTime.UtcNow`); cron-расписание и `NextRun` в UTC. Не используй `DateTime.Now`.
-- `TimeProvider` в `netstandard2.1` доступен только через пакет `Microsoft.Bcl.TimeProvider` и меняет конструкторы — вводи его только после согласования.
+- Текущее время и задержки — только через свойство `TimeProvider` базового класса: `TimeProvider.GetUtcNow().UtcDateTime`, `TimeProvider.Delay(...)` (пакет `Microsoft.Bcl.TimeProvider`). Не используй `DateTime.Now`, `DateTime.UtcNow`, `Task.Delay(TimeSpan)`.
+- Всё время в библиотеке — UTC; cron-расписание и `NextRun` в UTC.

@@ -10,7 +10,9 @@
 - Настройки `ScheduledHostedServiceBase` (`Schedule`, `IncludingSeconds`, `IsExecuteOnServerRestart`, `IsDelayBeforeStart`) читаются в базовом конструкторе, поэтому передавать их через конструктор наследника нельзя — на каждый сценарий отдельный наследник с константными override.
 - `IServiceScopeFactory`, `IServiceScope`, `ILogger` — через Moq; проверка логов — `LoggerMockExtensions.VerifyLog`.
 - Используй `TestContext.Current.CancellationToken` в тестах.
-- Тесты, которые реально ждут 5-секундный интервал проверки расписания, помечай `[Trait("Category", "Slow")]`. Не делай их без крайней необходимости.
+- Время — только через `TimeProvider`-перегрузки конструкторов: `SteppingTimeProvider` для тестов цикла, `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`) для тестов конструктора. Тесты не должны ждать реальные 5 секунд и зависеть от текущего времени.
+- Цикл продвигай через `SteppingTimeProvider.AdvanceToNextIterationAsync`: он ждёт, пока итерация завершится и цикл заведёт следующий таймер. Не делай `Advance` + `Task.Delay(...)` — следующий таймер может быть создан уже после сдвига времени, и тест станет нестабильным. Один сдвиг запускает не больше одной итерации.
+- `SteppingTimeProvider.Advance` (без ожидания) — только когда ни один таймер не должен сработать.
 - Тест на зависание (цикл без `await`) запускай через `Task.Run` + `Task.WhenAny` с таймаутом, иначе тестовый поток зависнет вместе с кодом.
 - Регрессионный тест на исправленный баг проверяй на коде до исправления — он должен падать.
 

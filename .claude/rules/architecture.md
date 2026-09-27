@@ -4,6 +4,7 @@
 - Все `public` и `protected` члены базовых классов — публичный контракт пакета. Переименование, удаление, смена сигнатуры конструктора или абстрактного члена — ломающее изменение: только с согласованием и повышением major-версии.
 - Новые настройки поведения добавляй как `protected virtual` свойства со значением по умолчанию, сохраняющим текущее поведение (как `IncludingSeconds`, `IsDelayBeforeStart`). Новые `abstract` члены ломают всех наследников.
 - Целевая платформа — `netstandard2.1`. Не меняй `TargetFramework` и не добавляй `TargetFrameworks` без согласования.
-- Зависимости ограничены `Microsoft.Extensions.*.Abstractions` и `ncrontab`. Новые пакеты (в т.ч. `Microsoft.Bcl.TimeProvider`, полный `Microsoft.Extensions.Hosting`) — только после согласования.
+- Зависимости ограничены `Microsoft.Extensions.*.Abstractions`, `Microsoft.Bcl.TimeProvider` и `ncrontab`. Новые пакеты (в т.ч. полный `Microsoft.Extensions.Hosting`) — только после согласования.
+- Новый параметр конструктора базового класса добавляй новой перегрузкой, сохраняя старую (как с `TimeProvider`): удаление перегрузки ломает наследников.
 - Проект не использует `Calabonga.AspNetCore.AppDefinitions`, Mediator/MediatR, EF Core и `Calabonga.Results` — не вводи их.
 - Автоматических тестов нет, поэтому поведение проверяй сборкой и запуском потребителя (пример — репозиторий `Calabonga/BackgroundWorker`).

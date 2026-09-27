@@ -4,8 +4,7 @@
 - Допускаются следующие наименования веток: `feature/`, `bugfix/`, `hotfix/`.
 - Форматы для коммитов (commit): `type: description` (feat, fix, refactor, test, docs, style, perf, build, ci, chore, revert).
 - Создавай атомарные коммиты — одно логическое изменение на коммит.
-- Перед коммитом запускай тесты: `dotnet test --project src/Calabonga.Microservices.BackgroundWorkers.Tests/Calabonga.Microservices.BackgroundWorkers.Tests.csproj -c Release`. Во время разработки можно без медленных: `... -- --filter-not-trait "Category=Slow"`.
-- Изменение в коде библиотеки сопровождай тестом; исправление бага — регрессионным тестом.
+- Перед коммитом запускай тесты: `dotnet test --project src/Calabonga.Microservices.BackgroundWorkers.Tests/Calabonga.Microservices.BackgroundWorkers.Tests.csproj -c Release`.- Изменение в коде библиотеки сопровождай тестом; исправление бага — регрессионным тестом.
 - Если требуется создать новые классы, проверь на наличие файлов с таким же названием в решении.
 
 ### Релиз
