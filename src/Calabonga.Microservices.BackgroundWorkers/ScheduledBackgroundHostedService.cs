@@ -19,6 +19,7 @@ namespace Calabonga.Microservices.BackgroundWorkers;
 /// </summary>
 public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
 {
+    private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(5);
     private CrontabSchedule? _schedule;
 
     protected abstract string Schedule { get; }
@@ -26,7 +27,18 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
     protected ScheduledHostedServiceBase(
         IServiceScopeFactory serviceScopeFactory,
         ILogger logger)
-        : base(serviceScopeFactory, logger)
+        : this(serviceScopeFactory, logger, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Creates service with custom <see cref="System.TimeProvider"/> (for example, a fake one in tests)
+    /// </summary>
+    protected ScheduledHostedServiceBase(
+        IServiceScopeFactory serviceScopeFactory,
+        ILogger logger,
+        TimeProvider timeProvider)
+        : base(serviceScopeFactory, logger, timeProvider)
     {
         GetSchedule();
     }
@@ -54,7 +66,8 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
     protected virtual bool IncludingSeconds => false;
 
     /// <summary>
-    /// Use delay before start.
+    /// Use 5 seconds delay before the first schedule check.
+    /// The schedule is checked every 5 seconds regardless of this value.
     /// It can be helpful when you need start in DEBUG mode your application and want that scheduler starts too <see cref="IsExecuteOnServerRestart"/>
     /// </summary>
     protected virtual bool IsDelayBeforeStart { get;  } = true;
@@ -69,7 +82,7 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
         }
 
         _schedule = CrontabSchedule.Parse(Schedule, new CrontabSchedule.ParseOptions { IncludingSeconds = IncludingSeconds });
-        var currentDateTime = DateTime.UtcNow;
+        var currentDateTime = TimeProvider.GetUtcNow().UtcDateTime;
         if (IsExecuteOnServerRestart)
         {
             NextRun = currentDateTime.AddSeconds(5);
@@ -83,19 +96,21 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
+        if (IsDelayBeforeStart)
+        {
+            await TimeProvider.Delay(CheckInterval, token).ConfigureAwait(false);
+        }
+
         do
         {
-            var now = DateTime.UtcNow;
+            var now = TimeProvider.GetUtcNow().UtcDateTime;
             if (now > NextRun)
             {
                 NextRun = _schedule!.GetNextOccurrence(now);
                 await ProcessAsync(token);
             }
 
-            if (IsDelayBeforeStart)
-            {
-                await Task.Delay(5000, token); //5 seconds delay
-            }
+            await TimeProvider.Delay(CheckInterval, token).ConfigureAwait(false);
         }
         while (!token.IsCancellationRequested);
     }

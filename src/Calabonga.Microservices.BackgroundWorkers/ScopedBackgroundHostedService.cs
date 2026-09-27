@@ -13,6 +13,15 @@ public abstract class ScopedHostedServiceBase : HostedServiceBase
 
     /// <inheritdoc />
     protected ScopedHostedServiceBase(IServiceScopeFactory serviceScopeFactory, ILogger logger)
+        : this(serviceScopeFactory, logger, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Creates service with custom <see cref="System.TimeProvider"/> (for example, a fake one in tests)
+    /// </summary>
+    protected ScopedHostedServiceBase(IServiceScopeFactory serviceScopeFactory, ILogger logger, TimeProvider timeProvider)
+        : base(timeProvider)
     {
         _serviceScopeFactory = serviceScopeFactory;
         Logger = logger;

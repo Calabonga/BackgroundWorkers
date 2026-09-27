@@ -10,6 +10,28 @@ public abstract class HostedServiceBase : IHostedService
     private Task? _executingTask;
     private readonly CancellationTokenSource _stoppingCancellationTokenSource = new CancellationTokenSource();
 
+    /// <summary>
+    /// Creates service with <see cref="System.TimeProvider.System"/>
+    /// </summary>
+    protected HostedServiceBase()
+        : this(TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Creates service with custom <see cref="System.TimeProvider"/> (for example, a fake one in tests)
+    /// </summary>
+    /// <param name="timeProvider">provider for current time and delays</param>
+    protected HostedServiceBase(TimeProvider timeProvider)
+    {
+        TimeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+    }
+
+    /// <summary>
+    /// Provider for current time and delays
+    /// </summary>
+    protected TimeProvider TimeProvider { get; }
+
     public virtual Task StartAsync(CancellationToken cancellationToken)
     {
         _executingTask = ExecuteAsync(_stoppingCancellationTokenSource.Token);
@@ -38,7 +60,7 @@ public abstract class HostedServiceBase : IHostedService
         do
         {
             await ProcessAsync(token);
-            await Task.Delay(5000, token);
+            await TimeProvider.Delay(TimeSpan.FromSeconds(5), token).ConfigureAwait(false);
         }
         while (!token.IsCancellationRequested);
     }
