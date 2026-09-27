@@ -54,7 +54,24 @@ public sealed class DailyReportWorker : ScheduledHostedServiceBase
 
 **Periodic worker.** `PeriodicHostedServiceBase` (since version 3.2.0) runs your code repeatedly with a random interval instead of a fixed schedule. Set the unit in `PeriodType` (`Minutes` or `Hours`) and the bounds in `MinValue` and `MaxValue`: after each run the next interval is chosen randomly between them, inclusive, with whole-minute precision, and is counted from the start of the run. For example, 3–4 hours gives intervals like 3:00, 3:07, 3:59 or 4:00, and 10–15 minutes gives 10, 11, …, 15 minutes. Unlike the scheduled worker, the settings are read when the worker starts, not in the constructor, so they can come from options injected into your class; invalid values (`MinValue` less than 1, `MaxValue` less than `MinValue`) throw `WorkerArgumentOutOfRangeException` and stop the host from starting. `IsExecuteOnServerRestart`, `IsDelayBeforeStart` and `NextRun` work the same way as in the scheduled worker.
 
+```json
+// appsettings.json
+{
+  "DatabaseReview": {
+    "MinHours": 3,
+    "MaxHours": 4
+  }
+}
+```
+
 ```csharp
+public sealed class ReviewOptions
+{
+    public int MinHours { get; set; } = 3;
+
+    public int MaxHours { get; set; } = 4;
+}
+
 public sealed class DatabaseReviewWorker : PeriodicHostedServiceBase
 {
     private readonly ReviewOptions _options;
@@ -65,7 +82,7 @@ public sealed class DatabaseReviewWorker : PeriodicHostedServiceBase
         _options = options.Value;
     }
 
-    // every 3-4 hours, e.g. from appsettings.json
+    // every 3-4 hours, values from the "DatabaseReview" section of appsettings.json
     protected override PeriodType PeriodType => PeriodType.Hours;
 
     protected override int MinValue => _options.MinHours;
@@ -91,6 +108,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHostedService<CleanupWorker>();
 builder.Services.AddHostedService<DailyReportWorker>();
+builder.Services.Configure<ReviewOptions>(builder.Configuration.GetSection("DatabaseReview"));
 builder.Services.AddHostedService<DatabaseReviewWorker>();
 
 var app = builder.Build();
