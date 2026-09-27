@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Правила проекта
 
 - @rules/architecture.md — расширение через наследование, публичный контракт, ограничения зависимостей и платформы.
-- @rules/code-styles.md — стиль C# в рамках C# 8.0 / `netstandard2.1`, асинхронность, ошибки, логирование, время.
+- @rules/code-styles.md — стиль C# в рамках C# 10.0 / `netstandard2.1`, асинхронность, ошибки, логирование, время.
 - @rules/conventions.md — именование классов, файлов, пространств имён, исключений и точек расширения.
 - @rules/testing.md — тестов нет; как оформлять тестовый проект, если он появится.
 - @rules/workflow.md — ветки от `master`, формат коммитов, релиз через push в `master`.
@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 сервисов (`IHostedService`) для приложений ASP.NET Core: воркер с DI-scope на каждую итерацию и воркер
 по расписанию CronTab (пакет `ncrontab`). В репозитории находится **только библиотека** — без примера
 приложения и без тестов (пример использования живёт в отдельном репозитории `Calabonga/BackgroundWorker`).
-Целевая платформа — `netstandard2.1`, `LangVersion` 8.0.
+Целевая платформа — `netstandard2.1`, `LangVersion` 10.0.
 
 ## Команды
 
@@ -30,7 +30,7 @@ dotnet pack src/Calabonga.Microservices.BackgroundWorkers/Calabonga.Microservice
 
 `GeneratePackageOnBuild` установлен в `true`, поэтому `.nupkg` появляется уже при сборке. CI
 (`.github/workflows/main.yml`) запускается при push в `master` и вручную (`workflow_dispatch`): сборка на
-`windows-latest` с .NET SDK 7.0.x, `dotnet pack` и `dotnet nuget push` на nuget.org с секретом
+`windows-latest` с .NET SDK 10.0.x, `dotnet pack` и `dotnet nuget push` на nuget.org с секретом
 `NUGET_API_KEY`. Флага `--skip-duplicate` нет — push без изменения `<Version>` в `.csproj` уронит CI.
 При выпуске поднимается `<Version>` и обновляется `<PackageReleaseNotes>`. `README.md` и `logo.png`
 упаковываются в пакет.
@@ -56,8 +56,8 @@ dotnet pack src/Calabonga.Microservices.BackgroundWorkers/Calabonga.Microservice
 
 - Имена файлов не совпадают с именами классов: `ScopedBackgroundHostedService.cs` → `ScopedHostedServiceBase`,
   `ScheduledBackgroundHostedService.cs` → `ScheduledHostedServiceBase`. Искать по имени класса, не файла.
-- `netstandard2.1` + C# 8.0: нельзя file-scoped namespaces, `record`, `init`, глобальные using и т.п.
-  Общие правила из `C:\Projects\.claude\rules\` тоже загружаются; при противоречии приоритет у `@rules/` этого репозитория.
+- `netstandard2.1` + C# 10.0: file-scoped namespaces и `ImplicitUsings` есть, но `record`/`init` недоступны
+  (нет `IsExternalInit`). Общие правила из `C:\Projects\.claude\rules\` тоже загружаются; при противоречии приоритет у `@rules/` этого репозитория.
 - `ScheduledHostedServiceBase` вызывает `GetSchedule()` из конструктора, а тот читает виртуальные/абстрактные
   члены (`Schedule`, `IncludingSeconds`, `IsExecuteOnServerRestart`, `DisplayName`). Их переопределения в
   наследнике выполняются до конструктора наследника — они не должны зависеть от его полей.
@@ -66,7 +66,8 @@ dotnet pack src/Calabonga.Microservices.BackgroundWorkers/Calabonga.Microservice
 - Проверка расписания идёт раз в 5 с, поэтому точность срабатывания ±5 с; расписания с интервалом меньше
   5 с не работают как ожидается. Пропущенные запуски не догоняются — `NextRun` пересчитывается от текущего
   времени.
-- Время — локальное `DateTime.Now`, не UTC; cron-расписание интерпретируется в часовом поясе сервера.
+- Время — `DateTime.UtcNow`: cron-расписание и `NextRun` в UTC, независимо от часового пояса сервера
+  (с версии 3.0.0; до неё было локальное `DateTime.Now`).
 - `ScopedHostedServiceBase.ProcessAsync` ловит все исключения, логирует и продолжает работу; наружу уходит
   только `OperationCanceledException` при отменённом токене. Падение одной итерации не останавливает воркер.
 - `HostedServiceBase` не реализует `IDisposable` — внутренний `CancellationTokenSource` не освобождается.
