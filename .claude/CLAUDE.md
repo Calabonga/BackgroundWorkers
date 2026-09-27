@@ -13,8 +13,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Обзор
 
 `Calabonga.Microservices.BackgroundWorkers` — небольшая NuGet-библиотека с базовыми классами фоновых
-сервисов (`IHostedService`) для приложений ASP.NET Core: воркер с DI-scope на каждую итерацию и воркер
-по расписанию CronTab (пакет `ncrontab`). В репозитории — библиотека и unit-тесты, без примера приложения
+сервисов (`IHostedService`) для приложений ASP.NET Core: воркер с DI-scope на каждую итерацию, воркер
+по расписанию CronTab (пакет `ncrontab`) и периодический воркер со случайным интервалом. В репозитории — библиотека и unit-тесты, без примера приложения
 (пример использования живёт в отдельном репозитории `Calabonga/BackgroundWorker`).
 Целевая платформа — `netstandard2.1`, `LangVersion` 10.0.
 
@@ -45,7 +45,7 @@ dotnet test --project src/Calabonga.Microservices.BackgroundWorkers.Tests/Calabo
 
 ## Архитектура
 
-Три уровня наследования в `src/Calabonga.Microservices.BackgroundWorkers/`:
+Три уровня наследования в `src/Calabonga.Microservices.BackgroundWorkers/` (Scheduled и Periodic — оба наследники Scoped):
 
 - **`Base/HostedServiceBase.cs`** — `HostedServiceBase : IHostedService`, собственная реализация (не
   `BackgroundService` из Microsoft.Extensions.Hosting). `StartAsync` запускает `ExecuteAsync` на внутреннем
@@ -59,7 +59,14 @@ dotnet test --project src/Calabonga.Microservices.BackgroundWorkers.Tests/Calabo
   Наследник задаёт `Schedule` (cron-строка) и `DisplayName`; опционально переопределяет `IncludingSeconds`
   (6-польный формат с секундами), `IsExecuteOnServerRestart` (первый запуск через 5 с после старта),
   `IsDelayBeforeStart`. Публичное свойство `NextRun` — время следующего запуска.
+- **`PeriodicHostedServiceBase.cs`** — класс `PeriodicHostedServiceBase : ScopedHostedServiceBase` (с 3.2.0).
+  Наследник задаёт `PeriodType` (`Minutes`/`Hours`, enum в `PeriodType.cs`), `MinValue`, `MaxValue`, `DisplayName`;
+  после каждого запуска следующий интервал выбирается случайно в [`MinValue`; `MaxValue`] включительно, с точностью
+  до минуты, от начала запуска. `IsExecuteOnServerRestart`, `IsDelayBeforeStart`, `NextRun` — как у Scheduled.
+  Расчёт и проверка интервала — internal `PeriodicInterval` (виден тестам через `InternalsVisibleTo`).
 - **`Exceptions/WorkerArgumentNullException.cs`** — бросается, если `Schedule` пустой.
+- **`Exceptions/WorkerArgumentOutOfRangeException.cs`** — некорректные настройки Periodic (`MinValue < 1`,
+  `MaxValue < MinValue`, неизвестный `PeriodType`, переполнение минут).
 
 У каждого базового класса две перегрузки конструктора: без `TimeProvider` (используется `TimeProvider.System`) и
 с ним (с 3.1.0, пакет `Microsoft.Bcl.TimeProvider`). Перегрузка без `TimeProvider` — для совместимости со
@@ -78,6 +85,12 @@ dotnet test --project src/Calabonga.Microservices.BackgroundWorkers.Tests/Calabo
 - `ScheduledHostedServiceBase` вызывает `GetSchedule()` из конструктора, а тот читает виртуальные/абстрактные
   члены (`Schedule`, `IncludingSeconds`, `IsExecuteOnServerRestart`, `DisplayName`). Их переопределения в
   наследнике выполняются до конструктора наследника — они не должны зависеть от его полей.
+- `PeriodicHostedServiceBase`, наоборот, читает настройки в начале `ExecuteAsync` (один раз при старте), поэтому
+  они могут зависеть от полей наследника (`IOptions`). Ошибка настроек бросается синхронно до первого `await` —
+  `StartAsync` возвращает упавшую задачу, хост не стартует. До старта `NextRun` = `default`. Не переносить
+  чтение настроек в конструктор. У Periodic третья перегрузка конструктора — с `Random` (для тестов).
+- Цикл проверки (5 с, `IsDelayBeforeStart`, `now > NextRun`) продублирован в Scheduled и Periodic — правки
+  поведения цикла вносить в оба класса.
 - `HostedServiceBase.StartAsync` вызывает `ExecuteAsync` синхронно до первого незавершённого `await`. Каждая
   итерация цикла в `ExecuteAsync` обязана содержать `await TimeProvider.Delay(...)`: цикл без него не только грузит ядро
   на 100%, но и не даёт `StartAsync` вернуться — хост не стартует (так было при `IsDelayBeforeStart = false`
