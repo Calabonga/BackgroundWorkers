@@ -19,7 +19,7 @@ namespace Calabonga.Microservices.BackgroundWorkers;
 /// </summary>
 public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
 {
-    private const int CheckIntervalMilliseconds = 5000;
+    private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(5);
     private CrontabSchedule? _schedule;
 
     protected abstract string Schedule { get; }
@@ -27,7 +27,18 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
     protected ScheduledHostedServiceBase(
         IServiceScopeFactory serviceScopeFactory,
         ILogger logger)
-        : base(serviceScopeFactory, logger)
+        : this(serviceScopeFactory, logger, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Creates service with custom <see cref="System.TimeProvider"/> (for example, a fake one in tests)
+    /// </summary>
+    protected ScheduledHostedServiceBase(
+        IServiceScopeFactory serviceScopeFactory,
+        ILogger logger,
+        TimeProvider timeProvider)
+        : base(serviceScopeFactory, logger, timeProvider)
     {
         GetSchedule();
     }
@@ -71,7 +82,7 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
         }
 
         _schedule = CrontabSchedule.Parse(Schedule, new CrontabSchedule.ParseOptions { IncludingSeconds = IncludingSeconds });
-        var currentDateTime = DateTime.UtcNow;
+        var currentDateTime = TimeProvider.GetUtcNow().UtcDateTime;
         if (IsExecuteOnServerRestart)
         {
             NextRun = currentDateTime.AddSeconds(5);
@@ -87,19 +98,19 @@ public abstract class ScheduledHostedServiceBase : ScopedHostedServiceBase
     {
         if (IsDelayBeforeStart)
         {
-            await Task.Delay(CheckIntervalMilliseconds, token);
+            await TimeProvider.Delay(CheckInterval, token).ConfigureAwait(false);
         }
 
         do
         {
-            var now = DateTime.UtcNow;
+            var now = TimeProvider.GetUtcNow().UtcDateTime;
             if (now > NextRun)
             {
                 NextRun = _schedule!.GetNextOccurrence(now);
                 await ProcessAsync(token);
             }
 
-            await Task.Delay(CheckIntervalMilliseconds, token);
+            await TimeProvider.Delay(CheckInterval, token).ConfigureAwait(false);
         }
         while (!token.IsCancellationRequested);
     }
