@@ -34,4 +34,4 @@ jobs:
         run: dotnet pack src/Calabonga.Microservices.BackgroundWorkers/Calabonga.Microservices.BackgroundWorkers.csproj --configuration Release --output "${{ runner.temp }}\Package"
 
       - name: Publish NuGet Package
-        run: dotnet nuget push "${{ runner.temp }}\Package\*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push "${{ runner.temp }}\Package\*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
