@@ -52,6 +52,32 @@ public sealed class DailyReportWorker : ScheduledHostedServiceBase
 }
 ```
 
+**Days of the week.** The fifth cron field is the day of the week: `0` = Sunday (`7` is not supported, use `0` or `SUN`), `1` = Monday, `2` = Tuesday, `3` = Wednesday, `4` = Thursday, `5` = Friday, `6` = Saturday; names (`MON`, `THU`) and lists/ranges (`1,4`, `1-5`) also work. **The schedule is evaluated in UTC**, so the day and hour are UTC too. `1 0 * * 1,4` runs on Monday and Thursday at 00:01 *UTC*; on a server whose local time is behind UTC (for example, UTC-5) that moment is still Sunday 19:01 / Wednesday 19:01 local time, which looks like "the worker ran on the wrong day". To run at a local time, convert the whole moment (hour **and** day of the week) to UTC. For example, Monday and Thursday at 00:01 in Moscow (UTC+3) are Sunday and Wednesday at 21:01 UTC:
+
+```csharp
+public sealed class TwiceAWeekWorker : ScheduledHostedServiceBase
+{
+    public TwiceAWeekWorker(IServiceScopeFactory serviceScopeFactory, ILogger<TwiceAWeekWorker> logger)
+        : base(serviceScopeFactory, logger) { }
+
+    // Monday and Thursday at 00:01 UTC
+    protected override string Schedule => "1 0 * * 1,4";
+
+    // the same with day names
+    // protected override string Schedule => "1 0 * * MON,THU";
+
+    // Monday and Thursday at 00:01 in UTC+3 (= Sunday and Wednesday at 21:01 UTC)
+    // protected override string Schedule => "1 21 * * 0,3";
+
+    protected override string DisplayName => "Twice a week";
+
+    protected override async Task ProcessInScopeAsync(IServiceProvider serviceProvider, CancellationToken token)
+    {
+        // ...
+    }
+}
+```
+
 **Periodic worker.** `PeriodicHostedServiceBase` (since version 3.2.0) runs your code repeatedly with a random interval instead of a fixed schedule. Set the unit in `PeriodType` (`Minutes` or `Hours`) and the bounds in `MinValue` and `MaxValue`: after each run the next interval is chosen randomly between them, inclusive, with whole-minute precision, and is counted from the start of the run. For example, 3–4 hours gives intervals like 3:00, 3:07, 3:59 or 4:00, and 10–15 minutes gives 10, 11, …, 15 minutes. Unlike the scheduled worker, the settings are read when the worker starts, not in the constructor, so they can come from options injected into your class; invalid values (`MinValue` less than 1, `MaxValue` less than `MinValue`) throw `WorkerArgumentOutOfRangeException` and stop the host from starting. `IsExecuteOnServerRestart`, `IsDelayBeforeStart` and `NextRun` work the same way as in the scheduled worker.
 
 ```json

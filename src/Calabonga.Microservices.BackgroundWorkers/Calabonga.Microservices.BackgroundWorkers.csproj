@@ -2,13 +2,13 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>3.2.0</Version>
+        <Version>3.2.1</Version>
         <Authors>Calabonga</Authors>
         <Company>Calabonga SOFT</Company>
         <Description>Background workers collection for ASP.NET Core application. CronTab-schedule and periodic workers with random interval available.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>calabonga, CronTab, background, worker, microservices, hosted, service, aspnetcore, core, hostedservice</PackageTags>
-        <PackageReleaseNotes>New PeriodicHostedServiceBase: runs periodically with a random interval between MinValue and MaxValue (PeriodType.Minutes or PeriodType.Hours, inclusive, whole minutes).</PackageReleaseNotes>
+        <PackageReleaseNotes>ncrontab updated to 3.4.0. README: day-of-week examples and a note that the schedule (day and hour) is evaluated in UTC. Tests for day-of-week schedules.</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Copyright>Calabonga</Copyright>
         <PackageProjectUrl>https://github.com/Calabonga/BackgroundWorkers</PackageProjectUrl>
@@ -43,7 +43,7 @@
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
         <PackageReference Include="Microsoft.Bcl.TimeProvider" Version="10.0.12" />
-        <PackageReference Include="ncrontab" Version="3.3.1" />
+        <PackageReference Include="ncrontab" Version="3.4.0" />
     </ItemGroup>
 
     <ItemGroup>
