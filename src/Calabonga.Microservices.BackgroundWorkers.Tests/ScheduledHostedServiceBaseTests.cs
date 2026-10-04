@@ -212,6 +212,116 @@ public sealed class ScheduledHostedServiceBaseTests
         Assert.Equal(new DateTime(2026, 1, 16, 3, 0, 0), worker.NextRun);
     }
 
+    [Fact]
+    public void Constructor_Should_SetNextRunToMonday_When_ScheduleIsMondayAndThursdayAndNowIsSunday()
+    {
+        // Arrange: 2026-01-18 is Sunday
+        var time = new SteppingTimeProvider(new DateTimeOffset(2026, 1, 18, 10, 0, 30, TimeSpan.Zero));
+
+        // Act
+        var worker = new MondayThursdayWorker(_scopeFactory.Object, _logger.Object, time);
+
+        // Assert
+        Assert.Equal(DayOfWeek.Monday, worker.NextRun.DayOfWeek);
+        Assert.Equal(new DateTime(2026, 1, 19, 0, 1, 0), worker.NextRun);
+    }
+
+    [Theory]
+    [InlineData(2026, 1, 19, 0, 1, 0, 2026, 1, 22)] // Monday 00:01 -> Thursday
+    [InlineData(2026, 1, 22, 0, 1, 0, 2026, 1, 26)] // Thursday 00:01 -> next Monday
+    [InlineData(2026, 1, 20, 12, 0, 0, 2026, 1, 22)] // Tuesday -> Thursday
+    public void Constructor_Should_SetNextRunToNextWorkingDay_When_ScheduleIsMondayAndThursday(
+        int year, int month, int day, int hour, int minute, int second,
+        int expectedYear, int expectedMonth, int expectedDay)
+    {
+        // Arrange
+        var time = new SteppingTimeProvider(new DateTimeOffset(year, month, day, hour, minute, second, TimeSpan.Zero));
+
+        // Act
+        var worker = new MondayThursdayWorker(_scopeFactory.Object, _logger.Object, time);
+
+        // Assert
+        Assert.Equal(new DateTime(expectedYear, expectedMonth, expectedDay, 0, 1, 0), worker.NextRun);
+    }
+
+    [Fact]
+    public void Constructor_Should_SetSameNextRun_When_DayNamesUsedInsteadOfNumbers()
+    {
+        // Arrange
+        var time = new SteppingTimeProvider(new DateTimeOffset(2026, 1, 18, 10, 0, 30, TimeSpan.Zero));
+
+        // Act
+        var numbers = new MondayThursdayWorker(_scopeFactory.Object, _logger.Object, time);
+        var names = new MondayThursdayNamesWorker(_scopeFactory.Object, _logger.Object, time);
+
+        // Assert
+        Assert.Equal(numbers.NextRun, names.NextRun);
+    }
+
+    [Fact]
+    public void Constructor_Should_SetNextRunToSundayLocalTime_When_LocalTimeZoneIsWestOfUtc()
+    {
+        // Arrange: server in UTC-05, local time is Sunday 18:00:30
+        var zone = TimeZoneInfo.CreateCustomTimeZone("UTC-05", TimeSpan.FromHours(-5), "UTC-05", "UTC-05");
+        var time = new FakeTimeProvider(new DateTimeOffset(2026, 1, 18, 23, 0, 30, TimeSpan.Zero));
+        time.SetLocalTimeZone(zone);
+
+        // Act
+        var worker = new MondayThursdayWorker(_scopeFactory.Object, _logger.Object, time);
+        var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(worker.NextRun, DateTimeKind.Utc), zone);
+
+        // Assert: the schedule is in UTC, so "Monday 00:01" is still Sunday 19:01 for such a server
+        Assert.Equal(new DateTime(2026, 1, 19, 0, 1, 0), worker.NextRun);
+        Assert.Equal(DayOfWeek.Sunday, local.DayOfWeek);
+        Assert.Equal(new DateTime(2026, 1, 18, 19, 1, 0), local);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldNot_Process_When_ScheduleIsMondayAndThursdayAndNowIsSunday()
+    {
+        // Arrange: Sunday 00:00:30, at 00:01 Sunday the worker must stay idle
+        var token = TestContext.Current.CancellationToken;
+        var time = new SteppingTimeProvider(new DateTimeOffset(2026, 1, 18, 0, 0, 30, TimeSpan.Zero));
+        var worker = new MondayThursdayWorker(_scopeFactory.Object, _logger.Object, time);
+        await worker.StartAsync(token);
+
+        // Act: 00:00:30 -> 00:01:05 Sunday
+        Assert.True(await time.AdvanceToNextIterationAsync(TimeSpan.FromSeconds(35), token));
+        await worker.StopAsync(token);
+
+        // Assert
+        Assert.Equal(0, worker.ProcessCount);
+        Assert.Equal(new DateTime(2026, 1, 19, 0, 1, 0), worker.NextRun);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_ProcessOnMondayAndThursday_When_ScheduleIsMondayAndThursday()
+    {
+        // Arrange: Sunday 23:59:30 UTC
+        var token = TestContext.Current.CancellationToken;
+        var time = new SteppingTimeProvider(new DateTimeOffset(2026, 1, 18, 23, 59, 30, TimeSpan.Zero));
+        var worker = new MondayThursdayWorker(_scopeFactory.Object, _logger.Object, time);
+        await worker.StartAsync(token);
+
+        // Act: first check at Monday 00:00:05 (not due yet), second at 00:01:05 (due)
+        Assert.True(await time.AdvanceToNextIterationAsync(TimeSpan.FromSeconds(35), token));
+        var processedBeforeSchedule = worker.ProcessCount;
+        Assert.True(await time.AdvanceToNextIterationAsync(TimeSpan.FromSeconds(60), token));
+        var processedOnMonday = worker.ProcessCount;
+        var nextRunAfterMonday = worker.NextRun;
+
+        // Act: Monday 00:01:05 -> Thursday 00:01:05
+        Assert.True(await time.AdvanceToNextIterationAsync(TimeSpan.FromDays(3), token));
+        await worker.StopAsync(token);
+
+        // Assert
+        Assert.Equal(0, processedBeforeSchedule);
+        Assert.Equal(1, processedOnMonday);
+        Assert.Equal(new DateTime(2026, 1, 22, 0, 1, 0), nextRunAfterMonday);
+        Assert.Equal(2, worker.ProcessCount);
+        Assert.Equal(new DateTime(2026, 1, 26, 0, 1, 0), worker.NextRun);
+    }
+
     private abstract class TestScheduledWorkerBase : ScheduledHostedServiceBase
     {
         private int _processCount;
@@ -258,6 +368,20 @@ public sealed class ScheduledHostedServiceBaseTests
         public DailyWorker(IServiceScopeFactory f, ILogger l, TimeProvider t) : base(f, l, t) { }
 
         protected override string Schedule => "0 3 * * *";
+    }
+
+    private sealed class MondayThursdayWorker : TestScheduledWorkerBase
+    {
+        public MondayThursdayWorker(IServiceScopeFactory f, ILogger l, TimeProvider t) : base(f, l, t) { }
+
+        protected override string Schedule => "1 0 * * 1,4";
+    }
+
+    private sealed class MondayThursdayNamesWorker : TestScheduledWorkerBase
+    {
+        public MondayThursdayNamesWorker(IServiceScopeFactory f, ILogger l, TimeProvider t) : base(f, l, t) { }
+
+        protected override string Schedule => "1 0 * * MON,THU";
     }
 
     private sealed class EveryMinuteWorker : TestScheduledWorkerBase
