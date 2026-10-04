@@ -7,7 +7,7 @@ namespace Calabonga.Microservices.BackgroundWorkers;
 
 /// <summary>
 /// Scheduled and Scoped Background Service with CronTab functionality.
-/// Schedule is evaluated in UTC.
+/// Schedule is evaluated in UTC (day of the week and hour too): "1 0 * * 1,4" is Monday and Thursday at 00:01 UTC.
 /// * * * * * *
 /// | | | | | |
 /// | | | | | +--- day of week (0 - 6) (Sunday=0)
