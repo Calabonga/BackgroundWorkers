@@ -1,4 +1,4 @@
-using Calabonga.Microservices.BackgroundWorkers.Exceptions;
+﻿using Calabonga.Microservices.BackgroundWorkers.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,11 +12,11 @@ namespace Calabonga.Microservices.BackgroundWorkers.Tests;
 /// </summary>
 public sealed class PeriodicHostedServiceBaseTests
 {
-    private static readonly DateTimeOffset Start = new DateTimeOffset(2026, 1, 15, 10, 0, 30, TimeSpan.Zero);
+    private static readonly DateTimeOffset Start = new(2026, 1, 15, 10, 0, 30, TimeSpan.Zero);
 
-    private readonly Mock<IServiceScopeFactory> _scopeFactory = new Mock<IServiceScopeFactory>();
-    private readonly Mock<ILogger> _logger = new Mock<ILogger>();
-    private readonly SteppingTimeProvider _time = new SteppingTimeProvider(Start);
+    private readonly Mock<IServiceScopeFactory> _scopeFactory = new();
+    private readonly Mock<ILogger> _logger = new();
+    private readonly SteppingTimeProvider _time = new(Start);
 
     public PeriodicHostedServiceBaseTests()
     {
@@ -232,7 +232,7 @@ public sealed class PeriodicHostedServiceBaseTests
     }
 
     private TestPeriodicWorker CreateWorker(WorkerSettings settings, Random random)
-        => new TestPeriodicWorker(_scopeFactory.Object, _logger.Object, _time, random, settings);
+        => new(_scopeFactory.Object, _logger.Object, _time, random, settings);
 
     private sealed record WorkerSettings(
         PeriodType PeriodType,

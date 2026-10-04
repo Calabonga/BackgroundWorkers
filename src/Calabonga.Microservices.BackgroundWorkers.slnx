@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Calabonga.Microservices.BackgroundWorkers.Tests/Calabonga.Microservices.BackgroundWorkers.Tests.csproj" />
+  <Project Path="Calabonga.Microservices.BackgroundWorkers/Calabonga.Microservices.BackgroundWorkers.csproj" />
+</Solution>
